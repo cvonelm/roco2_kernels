@@ -1,0 +1,6 @@
+[submodule "lib/penguinxx"]
+	path = lib/penguinxx
+	url = https://github.com/cvonelm/penguinxx
+[submodule "lib/firestarter"]
+	path = lib/firestarter
+	url = https://github.com/tud-zih-energy/firestarter
