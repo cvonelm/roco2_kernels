@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
 
-#include "asmjit/arm/a64operand.h"
-#include <fstream>
 #include <roco2_kernels/base_kernel.hpp>
 
 #include <penguinxx/clock.hpp>
 #include <penguinxx/cpu_set.hpp>
+#include <penguinxx/numa.hpp>
 #include <penguinxx/pthread/barrier.hpp>
 #include <penguinxx/pthread/thread.hpp>
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <optional>
@@ -32,6 +32,10 @@ void* run_kernel(void* arg)
 
     // Bind this thread to the given CPU
     targ->c.bind_this_thread_to();
+
+    // Use only allocations from the NUMA node of this CPU
+    penguinxx::NUMANodeSet::of_cpu(targ->c).unpack_ok().membind();
+
     auto k = roco2::kernels::kernel_from_enum(targ->k);
 
     // Wait for the other threads to arrive
