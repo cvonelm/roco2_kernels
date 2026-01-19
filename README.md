@@ -9,6 +9,31 @@ operating points for processors that can aid in helping to verify
 processor behavior (such as reported power consumption) over a wide
 range of different operation points.
 
+## Running
+
+USAGE: ./kernel_runner [kernel_name] [CPUS] [SECONDS]
+
+- `kernel_name`: Name of the kernel. See the list of defined kernels below
+- `CPUS`: Set of cpus on which the kernel will be executed. One instance
+  of every kernel is executed on every specified processor core.
+  This accepts range strings in the form of "3-5" or "1,2,3"
+- `SECONDS`: For how long the kernel should be run.
+
+### Kernels
+
+- addpd -- SIMD ASM addition
+- mulpd -- SIMD ASM multiplication
+- sinus -- `sin()`
+- sqrt -- square-root ASM calculation
+- blas -- Matrix multiplication using a BLAS library
+- busy_wait -- A busy_wait `while()` loop
+- compute -- Manually implemented Matrix multiplication
+- firestarter -- [FIRESTARTER](https://github.com/tud-zih-energy/FIRESTARTER) 
+- idle -- `sleep()`
+- memory_copy -- memory copy
+- memory_read -- memory read
+- memory_write -- memory write
+
 ## Building
 
 ### Requirements
@@ -35,31 +60,6 @@ $ cd build
 $ cmake ..
 $ make
 ```
-
-## Running
-
-USAGE: ./kernel_runner [kernel_name] [CPUS] [SECONDS]
-
-- `kernel_name`: Name of the kernel. See the list of defined kernels below
-- `CPUS`: Set of cpus on which the kernel will be executed. One instance
-  of every kernel is executed on every specified processor core.
-  This accepts range strings in the form of "3-5" or "1,2,3"
-- `SECONDS`: For how long the kernel should be run.
-
-### Kernels
-
-- addpd -- SIMD ASM addition
-- mulpd -- SIMD ASM multiplication
-- sinus -- `sin()`
-- sqrt -- square-root ASM calculation
-- blas -- Matrix multiplication using a BLAS library
-- busy_wait -- A busy_wait `while()` loop
-- compute -- Manually implemented Matrix multiplication
-- firestarter -- [FIRESTARTER](https://github.com/tud-zih-energy/FIRESTARTER) 
-- idle -- `sleep()`
-- memory_copy -- memory copy
-- memory_read -- memory read
-- memory_write -- memory write
 
 ## Pre-defined Experiments
 
