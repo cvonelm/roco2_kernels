@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 
+#include "asmjit/arm/a64operand.h"
+#include <fstream>
 #include <roco2_kernels/base_kernel.hpp>
 
+#include <penguinxx/clock.hpp>
 #include <penguinxx/cpu_set.hpp>
 #include <penguinxx/pthread/barrier.hpp>
 #include <penguinxx/pthread/thread.hpp>
@@ -14,6 +17,9 @@
 int run_time;
 std::optional<penguinxx::Barrier> barrier_;
 
+uint64_t begin, end;
+
+std::optional<penguinxx::Cpu> main_thread_cpu;
 struct thread_arg
 {
     roco2::kernels::Kernel k;
@@ -31,7 +37,16 @@ void* run_kernel(void* arg)
     // Wait for the other threads to arrive
     barrier_->wait();
 
+    if (main_thread_cpu.value() == targ->c)
+    {
+        begin = penguinxx::Clock::gettime(penguinxx::Clocks::MONOTONIC_RAW).unpack_ok();
+    }
     k->run(std::chrono::high_resolution_clock::now() + std::chrono::seconds(run_time));
+
+    if (main_thread_cpu.value() == targ->c)
+    {
+        end = penguinxx::Clock::gettime(penguinxx::Clocks::MONOTONIC_RAW).unpack_ok();
+    }
 
     return nullptr;
 }
@@ -81,12 +96,22 @@ int main(int argc, char** argv)
     }
 
     // Run one of the kernel execution threads on the main thread
-    run_kernel((void*)&args.at(*cpu_it));
+    main_thread_cpu = *cpu_it;
+    run_kernel((void*)&args.at(*main_thread_cpu));
 
     for (auto& thread : threads)
     {
         thread.join();
     }
+
+    // Write timestamp begin/end markers that
+    //  can be later used to correlate events from other
+    //  sources
+    std::ofstream begin_file("out_ts_begin");
+    std::ofstream end_file("out_ts_end");
+
+    begin_file << begin;
+    end_file << end;
 
     return 0;
 }
