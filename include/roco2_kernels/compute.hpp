@@ -9,12 +9,17 @@ namespace roco2
 namespace kernels
 {
 
+#define COMPUTE_KERNEL_VEC_SIZE 1024
 class compute : public base_kernel
 {
 public:
-    compute() : vec_A(1024), vec_B(1024), vec_C(1024)
+    compute()
     {
-        for (std::size_t i = 0; i < vec_A.size(); ++i)
+        vec_A = static_cast<double*>(malloc(COMPUTE_KERNEL_VEC_SIZE * sizeof(double)));
+        vec_B = static_cast<double*>(malloc(COMPUTE_KERNEL_VEC_SIZE * sizeof(double)));
+        vec_C = static_cast<double*>(malloc(COMPUTE_KERNEL_VEC_SIZE * sizeof(double)));
+
+        for (std::size_t i = 0; i < COMPUTE_KERNEL_VEC_SIZE; ++i)
         {
             vec_A[i] = static_cast<double>(i) * 0.3;
             vec_B[i] = static_cast<double>(i) * 0.2;
@@ -36,7 +41,7 @@ public:
             loops++;
         }
 
-        (void)loops;
+        iteration_count_ = loops;
 
         // just as a data dependency
         volatile int dd = 0;
@@ -44,12 +49,18 @@ public:
             dd++;
     }
 
+    ~compute()
+    {
+        free(vec_A);
+        free(vec_B);
+        free(vec_C);
+    }
+
 private:
-    void compute_kernel(std::vector<double>& A, std::vector<double>& B, std::vector<double>& C,
-                        std::size_t repeat)
+    void compute_kernel(double* A, double* B, double* C, std::size_t repeat)
     {
         double m = C[0];
-        const auto size = 1024;
+        const auto size = COMPUTE_KERNEL_VEC_SIZE;
 
         for (std::size_t i = 0; i < repeat; i++)
         {
@@ -62,9 +73,9 @@ private:
     }
 
 private:
-    std::vector<double> vec_A;
-    std::vector<double> vec_B;
-    std::vector<double> vec_C;
+    double* vec_A;
+    double* vec_B;
+    double* vec_C;
 };
 } // namespace kernels
 } // namespace roco2

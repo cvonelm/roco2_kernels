@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <memory>
+#include <sys/types.h>
 #include <vector>
 
 namespace roco2
@@ -38,6 +39,14 @@ public:
     virtual ~base_kernel()
     {
     }
+
+    uint64_t iteration_count()
+    {
+        return iteration_count_;
+    }
+
+protected:
+    uint64_t iteration_count_ = 0;
 
 private:
 };

@@ -17,7 +17,7 @@
 int run_time;
 std::optional<penguinxx::Barrier> barrier_;
 
-uint64_t begin, end;
+uint64_t begin, end, iteration_count;
 
 std::optional<penguinxx::Cpu> main_thread_cpu;
 struct thread_arg
@@ -50,6 +50,7 @@ void* run_kernel(void* arg)
     if (main_thread_cpu.value() == targ->c)
     {
         end = penguinxx::Clock::gettime(penguinxx::Clocks::MONOTONIC_RAW).unpack_ok();
+        iteration_count = k->iteration_count();
     }
 
     return nullptr;
@@ -113,9 +114,11 @@ int main(int argc, char** argv)
     //  sources
     std::ofstream begin_file("out_ts_begin");
     std::ofstream end_file("out_ts_end");
+    std::ofstream iteration_count_file("out_iteration_count");
 
     begin_file << begin;
     end_file << end;
+    iteration_count_file << iteration_count;
 
     return 0;
 }

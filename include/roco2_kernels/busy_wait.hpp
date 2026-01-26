@@ -23,7 +23,7 @@ public:
             loops++;
         }
 
-        (void)loops;
+        iteration_count_ = loops;
     }
 };
 } // namespace kernels

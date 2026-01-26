@@ -31,12 +31,12 @@ class firestarter : public base_kernel
 public:
     firestarter()
     {
+        unsigned int cpu;
+        getcpu(&cpu, nullptr);
+
         env.evaluateCpuAffinity(0, "");
         env.evaluateFunctions();
         env.selectFunction(0, false);
-
-        unsigned int cpu;
-        getcpu(&cpu, nullptr);
         lwd_ = std::make_unique<::firestarter::LoadWorkerData>(cpu, env, &loadVar, 0, false, false);
 
         auto* lwd = lwd_.get();
@@ -77,14 +77,19 @@ public:
         cntrl_thread = std::thread(stop, until, &loadVar);
 
         auto* lwd = lwd_.get();
+        uint64_t loops;
         do
         {
             lwd->iterations = lwd->config().payload().highLoadFunction(lwd->addrMem, lwd->addrHigh,
                                                                        lwd->iterations);
 
+            loops++;
+
         } while (std::chrono::high_resolution_clock::now() < until);
 
         cntrl_thread.join();
+
+        iteration_count_ = loops;
     }
 
     unsigned long long loadVar;

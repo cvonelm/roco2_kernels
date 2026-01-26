@@ -19,9 +19,13 @@ namespace kernels
 class matmul : public base_kernel
 {
 public:
-    matmul() : mat_A(512 * 512), mat_B(512 * 512), mat_C(512 * 512)
+    matmul()
     {
-        for (std::size_t i = 0; i < mat_A.size(); i++)
+        mat_A = static_cast<double*>(malloc(mat_size * sizeof(double)));
+        mat_B = static_cast<double*>(malloc(mat_size * sizeof(double)));
+        mat_C = static_cast<double*>(malloc(mat_size * sizeof(double)));
+
+        for (std::size_t i = 0; i < mat_size; i++)
         {
             mat_A[i] = static_cast<double>(i + 1);
             mat_B[i] = static_cast<double>(i + 1);
@@ -31,23 +35,31 @@ public:
 
     virtual void run(std::chrono::high_resolution_clock::time_point until) override
     {
-        double* A = mat_A.data();
-        double* B = mat_B.data();
-        double* C = mat_C.data();
-
         uint64_t m = 512;
 
+        uint64_t loops;
         do
         {
-            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, m, m, 1.0, A, m, B, m, 1.0, C,
-                        m);
+            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, m, m, 1.0, mat_A, m, mat_B, m,
+                        1.0, mat_C, m);
+            loops++;
         } while (std::chrono::high_resolution_clock::now() < until);
+
+        iteration_count_ = loops;
+    }
+
+    ~matmul()
+    {
+        free(mat_A);
+        free(mat_B);
+        free(mat_C);
     }
 
 private:
-    std::vector<double> mat_A;
-    std::vector<double> mat_B;
-    std::vector<double> mat_C;
+    double* mat_A;
+    double* mat_B;
+    double* mat_C;
+    uint64_t mat_size = 512 * 512;
 };
 
 } // namespace kernels

@@ -19,14 +19,17 @@ public:
     {
         double m = 0.0;
 
+        uint64_t loops;
         do
         {
             for (std::size_t i = 0; i < sinus_loop; i++)
             {
                 m += sin((double)i);
             }
+            loops++;
         } while (std::chrono::high_resolution_clock::now() < until);
 
+        iteration_count_ = loops;
         // just as a data dependency
         volatile int dd = 0;
         if (m == 42.0)

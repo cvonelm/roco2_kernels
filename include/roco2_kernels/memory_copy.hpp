@@ -14,9 +14,11 @@ namespace kernels
 class memory_copy : public base_kernel
 {
 public:
-    memory_copy() : mem_buffer(mem_size)
+    memory_copy()
     {
-        for (std::size_t i = 0; i < mem_buffer.size(); i++)
+
+        mem_buffer = static_cast<uint64_t*>(malloc(mem_size * sizeof(uint64_t)));
+        for (std::size_t i = 0; i < mem_size; i++)
         {
             mem_buffer[i] = i * 23 + 42;
         }
@@ -24,17 +26,26 @@ public:
 
     void run(std::chrono::high_resolution_clock::time_point until) override
     {
+        uint64_t loops;
         do
         {
-            for (std::size_t i = 0; i < mem_buffer.size(); i++)
+            for (std::size_t i = 0; i < mem_size; i++)
             {
                 mem_buffer[i] += mem_buffer[i];
             }
+            loops++;
         } while (std::chrono::high_resolution_clock::now() < until);
+
+        iteration_count_ = loops;
+    }
+
+    ~memory_copy()
+    {
+        free(mem_buffer);
     }
 
 private:
-    std::vector<std::uint64_t> mem_buffer;
+    uint64_t* mem_buffer;
     static const std::size_t mem_size = 1024 * 1024;
 };
 } // namespace kernels
