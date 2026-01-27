@@ -17,7 +17,7 @@ public:
     sqrt()
     {
         vec_A = static_cast<double*>(malloc(vec_size * sizeof(double)));
-        vec_F = static_cast<float*>(malloc(vec_size * sizeof(double)));
+        vec_F = static_cast<float*>(malloc(vec_size * sizeof(float)));
         for (std::size_t i = 0; i < vec_size; ++i)
         {
             vec_A[i] = static_cast<double>(i) * 0.3;
@@ -27,7 +27,7 @@ public:
 
     void run(std::chrono::high_resolution_clock::time_point until) override
     {
-        uint64_t loops;
+        uint64_t loops = 0;
         do
         {
             switch (type)

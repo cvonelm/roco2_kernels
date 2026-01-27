@@ -1,60 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0
 
 #include <roco2_kernels/base_kernel.hpp>
+#include <roco2_kernels/runner.hpp>
 
-#include <penguinxx/clock.hpp>
+#include <penguinxx/cpu.hpp>
 #include <penguinxx/cpu_set.hpp>
-#include <penguinxx/numa.hpp>
-#include <penguinxx/pthread/barrier.hpp>
-#include <penguinxx/pthread/thread.hpp>
 
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <map>
-#include <optional>
-
-int run_time;
-std::optional<penguinxx::Barrier> barrier_;
-
-uint64_t begin, end, iteration_count;
-
-std::optional<penguinxx::Cpu> main_thread_cpu;
-struct thread_arg
-{
-    roco2::kernels::Kernel k;
-    penguinxx::Cpu c;
-};
-
-void* run_kernel(void* arg)
-{
-    struct thread_arg* targ = reinterpret_cast<struct thread_arg*>(arg);
-
-    // Bind this thread to the given CPU
-    targ->c.bind_this_thread_to();
-
-    // Use only allocations from the NUMA node of this CPU
-    penguinxx::NUMANodeSet::of_cpu(targ->c).unpack_ok().membind();
-
-    auto k = roco2::kernels::kernel_from_enum(targ->k);
-
-    // Wait for the other threads to arrive
-    barrier_->wait();
-
-    if (main_thread_cpu.value() == targ->c)
-    {
-        begin = penguinxx::Clock::gettime(penguinxx::Clocks::MONOTONIC_RAW).unpack_ok();
-    }
-    k->run(std::chrono::high_resolution_clock::now() + std::chrono::seconds(run_time));
-
-    if (main_thread_cpu.value() == targ->c)
-    {
-        end = penguinxx::Clock::gettime(penguinxx::Clocks::MONOTONIC_RAW).unpack_ok();
-        iteration_count = k->iteration_count();
-    }
-
-    return nullptr;
-}
 
 int main(int argc, char** argv)
 {
@@ -80,34 +34,15 @@ int main(int argc, char** argv)
     auto kernel = kernel_res.unpack_ok();
 
     auto cpu_set = penguinxx::CpuSet::from_range_str(argv[2]).unpack_ok();
+    auto run_time = std::chrono::seconds(std::stoul(argv[3]));
 
-    run_time = std::stoul(argv[3]);
-
-    barrier_ = penguinxx::Barrier::create(cpu_set.size()).unpack_ok();
-
-    std::map<penguinxx::Cpu, struct thread_arg> args;
+    roco2::kernels::Runner r;
     for (const auto& cpu : cpu_set)
     {
-        struct thread_arg targ = { .k = kernel, .c = cpu };
-        args.emplace(cpu, targ);
+        r.add_cpu(cpu, kernel);
     }
 
-    std::vector<penguinxx::Pthread> threads;
-    auto cpu_it = cpu_set.begin();
-    for (; cpu_it != --cpu_set.end(); cpu_it++)
-    {
-        threads.emplace_back(
-            penguinxx::Pthread::create(run_kernel, (void*)&args.at(*cpu_it)).unpack_ok());
-    }
-
-    // Run one of the kernel execution threads on the main thread
-    main_thread_cpu = *cpu_it;
-    run_kernel((void*)&args.at(*main_thread_cpu));
-
-    for (auto& thread : threads)
-    {
-        thread.join();
-    }
+    auto res = r.run(run_time);
 
     // Write timestamp begin/end markers that
     //  can be later used to correlate events from other
@@ -116,9 +51,9 @@ int main(int argc, char** argv)
     std::ofstream end_file("out_ts_end");
     std::ofstream iteration_count_file("out_iteration_count");
 
-    begin_file << begin;
-    end_file << end;
-    iteration_count_file << iteration_count;
+    begin_file << res.begin;
+    end_file << res.end;
+    iteration_count_file << res.it_count;
 
     return 0;
 }
