@@ -5,6 +5,7 @@
 #include <roco2_kernels/busy_wait.hpp>
 #include <roco2_kernels/compute.hpp>
 #include <roco2_kernels/firestarter.hpp>
+#include <roco2_kernels/gpu.hpp>
 #include <roco2_kernels/idle.hpp>
 #include <roco2_kernels/matmul.hpp>
 #include <roco2_kernels/memory_copy.hpp>

@@ -12,9 +12,9 @@
 
 int main(int argc, char** argv)
 {
-    if (argc != 4)
+    if (argc != 4 && argc != 6)
     {
-        std::cerr << "USAGE: ./kernel_runner [kernel_name] [CPUS] [SECONDS]\n";
+        std::cerr << "USAGE: ./kernel_runner [kernel_name] [CPUS] [SECONDS] [gpu [PERCENTAGE]]\n";
         std::cerr << "With kernel_name:\n";
 
         for (auto kernel : roco2::kernels::kernel_names())
@@ -40,6 +40,11 @@ int main(int argc, char** argv)
     for (const auto& cpu : cpu_set)
     {
         r.add_cpu(cpu, kernel);
+    }
+
+    if (argc == 6)
+    {
+        r.add_gpu(std::stoi(argv[5]));
     }
 
     auto res = r.run(run_time);

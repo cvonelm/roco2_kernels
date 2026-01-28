@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.11)
 project(roco2_kernels)
 
+include(CheckLanguage)
+
 find_package(CBLAS REQUIRED)
 
 add_subdirectory(lib/firestarter)
@@ -32,6 +34,16 @@ endif()
 
 add_executable(kernel_runner src/kernel_runner.cpp)
 target_link_libraries(kernel_runner libroco2_kernels)
+
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    target_sources(kernel_runner PRIVATE src/roco2.cu)
+    target_compile_definitions(kernel_runner PUBLIC HAVE_CUDA)
+endif()
+
+add_executable(frequency_sweeper src/frequency_sweeper.cpp)
+target_link_libraries(frequency_sweeper libroco2_kernels)
 
 add_executable(kernel_list src/tools/kernel_list.cpp)
 target_link_libraries(kernel_list libroco2_kernels)
