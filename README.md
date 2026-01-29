@@ -11,29 +11,65 @@ range of different operation points.
 
 ## Running
 
-USAGE: ./kernel_runner [kernel_name] [CPUS] [SECONDS]
+`./kernel_runner [KERNEL] [CPUS] [SECONDS] [gpu [GPU_PERCENTAGE]`
 
-- `kernel_name`: Name of the kernel. See the list of defined kernels below
-- `CPUS`: Set of cpus on which the kernel will be executed. One instance
-  of every kernel is executed on every specified processor core.
+- `KERNEL`: Name of the CPU kernel. See the list of defined kernels below
+- `CPUS`: Set of cpus on which the CPU kernel will be executed.
   This accepts range strings in the form of "3-5" or "1,2,3"
-- `SECONDS`: For how long the kernel should be run.
+- `SECONDS`: For how long roco2 should be run.
+- `gpu [GPU_PERCENTAGE]` *OPTIONAL* If this argument is given, additionally
+  to the CPU kernel, a GPU kernel is run on `GPU_PERCENTAGE` of all SM's.
 
 ### Kernels
 
-- addpd -- SIMD ASM addition
-- mulpd -- SIMD ASM multiplication
-- sinus -- `sin()`
-- sqrt -- square-root ASM calculation
+- addpd -- assembly SIMD addition
+- mulpd -- assembly SIMD multiplication
+- sqrt -- assembly square-root calculation
+- sinus -- continuous `sin()`
 - blas -- Matrix multiplication using a BLAS library
 - busy_wait -- A busy_wait `while()` loop
 - compute -- Manually implemented Matrix multiplication
 - firestarter -- [FIRESTARTER](https://github.com/tud-zih-energy/FIRESTARTER) 
 - idle -- `sleep()`
-- memory_copy -- memory copy
-- memory_read -- memory read
-- memory_write -- memory write
+- memory_copy -- copying memory between locations
+- memory_read -- reading memory into registers
+- memory_write -- writing registers into memory
+  
+### Examples
 
+```bash
+# Runs the addpd kernel for 10 seconds on CPUs 0, 2 and 3
+~ % ./kernel_runner addpd 0,2,3 10
+# Runs the blas matmul kernel on CPUs 0 through 10, while running
+# the GPU kernel on 30% of all SM's
+~ % ./kernel_runner blas 0-10 10 gpu 30
+```
+
+### Output
+
+To integrate with other measurement infrastructure, mostly [exomat](https://github.com/tud-zih-energy/exomat), roco2_kernels provides output of its kernel execution in the form of `out_*` files.
+
+Those are:
+
+- `out_ts_begin`: The beginning of the execution of the CPU kernel, in
+  clock-ticks as recorded through the `MONOTONIC_RAW` clock.
+- `out_ts_end`: The end of the execution of the CPU kernel, in
+  clock-ticks as recorded through the `MONOTONIC_RAW` clock.
+- `out_iteration_count` The number of executions of the CPU kernel, summed up
+  over all CPUs. Every roco2 workload is implemented around a small
+  kernel which is continuously executed until the specified run-time has
+  passed. This iteration count can then be used to gauge system performance
+  under these workloads.
+
+### Additional Commands
+
+These have been developed for one-off experiments:
+
+```bash
+# Execute the compute kernel continuously, while reducing the
+# CPU frequency from the highest to the lowest in 2 second intervals.
+~ % ./frequency_sweeper
+```
 ## Building
 
 ### Requirements
@@ -44,6 +80,7 @@ USAGE: ./kernel_runner [kernel_name] [CPUS] [SECONDS]
     - C++ fmtlib (https://github.com/fmtlib/fmt)
 - FIRESTARTER requirements:
     - hwloc (https://www.open-mpi.org/projects/hwloc/)
+- _OPTIONAL_: CUDA, for the optional GPU workload
 
 roco2_kernels is dependent on submodules.
 To be able to build it, be sure you have downloaded them
