@@ -58,7 +58,13 @@ int main(int argc, char** argv)
 
     begin_file << res.begin;
     end_file << res.end;
-    iteration_count_file << res.it_count;
+
+    uint64_t global_its = 0;
+    for (auto it_count : res.it_count)
+    {
+        global_its += it_count.second;
+    }
+    iteration_count_file << global_its;
 
     return 0;
 }

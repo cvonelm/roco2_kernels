@@ -30,7 +30,7 @@ public:
     {
         uint64_t begin;
         uint64_t end;
-        uint64_t it_count;
+        std::map<penguinxx::Cpu, uint64_t> it_count;
     };
 
     struct result run(std::chrono::seconds run_time)
@@ -53,6 +53,8 @@ public:
         auto cpu_it = load_map_.begin();
         for (; cpu_it != --load_map_.end(); cpu_it++)
         {
+            res.it_count.emplace(cpu_it->first, 0);
+
             threads.emplace_back(penguinxx::Pthread::create(run_kernel, cpu_it->first, false,
                                                             cpu_it->second, &barrier, run_time,
                                                             &res)
@@ -64,6 +66,7 @@ public:
             threads.emplace_back(
                 penguinxx::Pthread::create(run_gpu, &gpu_.value(), run_time, &barrier).unpack_ok());
         }
+        res.it_count.emplace(cpu_it->first, 0);
 
         // Run one of the kernel execution threads on the main thread
         run_kernel(cpu_it->first, true, cpu_it->second, &barrier, run_time, &res);
@@ -113,8 +116,9 @@ private:
         if (is_main)
         {
             res->end = penguinxx::Clock::gettime(penguinxx::Clocks::MONOTONIC_RAW).unpack_ok();
-            res->it_count = k->iteration_count();
         }
+
+        res->it_count.at(cpu) = k->iteration_count();
     }
 
     static void run_gpu(gpu_kernel* gpu, std::chrono::seconds run_time, penguinxx::Barrier* barrier)

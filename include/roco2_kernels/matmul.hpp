@@ -37,7 +37,7 @@ public:
     {
         uint64_t m = 512;
 
-        uint64_t loops;
+        uint64_t loops = 0;
         do
         {
             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, m, m, m, 1.0, mat_A, m, mat_B, m,
